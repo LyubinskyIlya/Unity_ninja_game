@@ -25,8 +25,8 @@ public class Damage : MonoBehaviour
             //push
             var enemyScript = collision.gameObject.GetComponent<AI>();
             var direction = collision.ClosestPoint((Vector2)transform.position);
-            var force = 200f;
-            enemyScript.attackPush(direction, force);
+            var force = 50;
+            enemyScript.attackPush(direction, force, ForceMode2D.Impulse);
          }
      }
 }

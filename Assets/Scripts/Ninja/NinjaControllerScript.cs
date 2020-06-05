@@ -10,7 +10,9 @@ using UnityEngine.UIElements;
 public class NinjaControllerScript : PlayerControllerScript
 {
     public float maxSpeed = 10f;
-    public float jumpForce = 600;
+    //public float jumpForce = 600;
+    public float jumpSpeed = 10;
+    public float maxJumpingTime = 1;
     public GameObject attack_1_1;
     public GameObject attack_1_2;
     public GameObject attack_3_1;
@@ -31,6 +33,8 @@ public class NinjaControllerScript : PlayerControllerScript
     private bool isGrounded = true;
     private bool freezeMovement = false;
     private bool groundAttacking = false;
+    private bool lastFrameisGrounded = true;
+    private float lastJumpTime = -1;
 
     void Start()
     {
@@ -189,6 +193,7 @@ public class NinjaControllerScript : PlayerControllerScript
         float move = Input.GetAxisRaw("Horizontal");
         //float move = Input.GetAxis("Horizontal");
         anim.SetFloat("Speed", Mathf.Abs(move));
+        var runSound = AudioByName["Run"];
         if (!freezeMovement)
         {
             rb.velocity = new Vector2(move * maxSpeed, rb.velocity.y);
@@ -197,17 +202,47 @@ public class NinjaControllerScript : PlayerControllerScript
             {
                 Flip();
             }
+            if (Mathf.Abs(move) > 0.01 && !runSound.isPlaying && isGrounded)
+            {
+                runSound.Play();
+            }
+            else if (runSound.isPlaying && (Mathf.Abs(move) < 0.01 || !isGrounded))
+            {
+                runSound.Stop();
+            }
         }
+        else if (runSound.isPlaying)
+        {
+            runSound.Stop();
+        }
+        lastFrameisGrounded = isGrounded;
         isGrounded = CheckGround();
         anim.SetBool("isGrounded", isGrounded);
+        if (lastFrameisGrounded && ! isGrounded)
+        {
+            AudioByName["PreJump"].Play();
+        }
+        else if (! lastFrameisGrounded && isGrounded)
+        {
+            AudioByName["PostJump"].Play();
+        }
     }
 
     void Update()
     {
+        if (Input.GetKeyUp(KeyCode.Space) || rb.velocity.y == 0) // stop jumping anyway
+        {
+            lastJumpTime = -5;
+        }
         if (isGrounded && Input.GetKeyDown(KeyCode.Space) && ! freezeMovement)
         {
-            rb.velocity = new Vector2(rb.velocity.x, 0);
-            rb.AddForce(new Vector2(0, jumpForce));
+            lastJumpTime = Time.time;
+            rb.velocity = new Vector2(rb.velocity.x, jumpSpeed);
+            //rb.AddForce(new Vector2(0, jumpForce));
+        }
+        else if ( ((Time.time - lastJumpTime) < maxJumpingTime) && Input.GetKey(KeyCode.Space) && !freezeMovement)
+        {
+            rb.velocity = new Vector2(rb.velocity.x, jumpSpeed);
         }
         else if (isGrounded && Input.GetMouseButtonDown(0) && !groundAttacking)
         {

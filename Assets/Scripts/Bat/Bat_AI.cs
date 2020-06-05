@@ -9,6 +9,7 @@ public class Bat_AI : AI
     public int touchDamage = 10;
 
     private GameObject player;
+    private AudioSource dieSound;
    // private Rigidbody2D rb;
     private bool isFacingRight = true;
     private float last_hit_time = -5;
@@ -22,12 +23,17 @@ public class Bat_AI : AI
         rb = GetComponent<Rigidbody2D>();
         anim = GetComponent<Animator>();
         anim.SetBool("isAlive", isAlive);
+        dieSound = GetComponent<AudioSource>();
        // Debug.Log(rb);
     }
 
     private void OnTriggerStay2D(Collider2D other)
     {
         // тут надо допилить чтоб не наносился урон если underAttack==true
+        if (!isAlive)
+        {
+            return;
+        }
         if (other.tag == "Player")
         {
             last_hit_time = Time.time;
@@ -37,12 +43,7 @@ public class Bat_AI : AI
             {
                 after_hit_direction *= -1;
             }
-            var bar = other.transform.Find("PlayerHP"); 
-            var scr = bar.GetComponent<PlayerHP>();
-            if (!underAttack)
-            {
-                scr.takeDamage(touchDamage);
-            }
+            onTouchPlayer(other, touchDamage);
         }
     }
 
@@ -78,12 +79,12 @@ public class Bat_AI : AI
             if (Time.time - last_hit_time < 0.5)
             {
                 direction = after_hit_direction;
-                Debug.Log("Escaping");
+               // Debug.Log("Escaping");
             }
             else
             {
                 direction = (player.transform.position - transform.position).normalized;
-                Debug.Log("Attacking");
+                //Debug.Log("Attacking");
             }
             rb.velocity = (Vector2)direction * speed;
         }
@@ -106,5 +107,6 @@ public class Bat_AI : AI
         bc.isTrigger = false;
         rb.gravityScale = 1;
         var tmp = ExecuteAfter(5000, Disappear);
+        dieSound.Play();
     }
 }

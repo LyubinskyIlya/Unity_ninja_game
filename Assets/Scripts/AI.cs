@@ -33,9 +33,28 @@ public class AI : MonoBehaviour
         underAttack = false;
     }
 
+    virtual protected void onTouchPlayer(Collider2D player, int touchDamage)
+    {
+        var bar = player.transform.Find("PlayerHP");
+        if (!bar)
+        {
+            return;
+        }
+        var scr = bar.GetComponent<PlayerHP>();
+        if (!scr)
+        {
+            return;
+        }
+        if (!underAttack)
+        {
+            scr.takeDamage(touchDamage);
+        }
+    }
+
     virtual public void attackPush(Vector2 direction, float force, ForceMode2D mode = ForceMode2D.Force)
     {
-        rb.AddForce(direction * force, mode);
+        Debug.Log("smb under attack");
+        rb.AddForce(direction.normalized * force, mode);
         underAttack = true;
         // создал Task чтобы не было ворнинга о том, что мы не ждем выполнение делигируемой функции
         Task delayTask = ExecuteAfter(500, enableMove);
@@ -44,6 +63,10 @@ public class AI : MonoBehaviour
     virtual public void Die()
     {
         isAlive = false;
-        anim.SetBool("isAlive", false);
+        if (anim)
+        {
+            anim.SetBool("isAlive", false);
+        }
+        Destroy(gameObject);
     }    
 }
